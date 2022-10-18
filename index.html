@@ -9,7 +9,7 @@
 </head>
 
 <body style="height: 100%; margin: 0">
-  <div style="text-align: center;">哈哈哈 精彩人生</div>
+  <div style="text-align: center;padding: 6px 0px;font-size: 20px;">罗先生的条形图</div>
   <div id="container" style="height: 8000px"></div>
 
 
@@ -33,6 +33,10 @@
   -->
 
   <script type="text/javascript">
+    var myMoney = prompt("请输入贷款金额(万元)", "");
+    var myMonth = prompt("请输入贷款期限(年)", "");
+    var myLilv = prompt("请输入贷款利率(%)", "");
+
     //期次数组
     let categoryArr = []
     //偿还本金数组
@@ -90,7 +94,7 @@
 
       return resArray;
     }
-    let res = debx(5.8, 56, 360);
+    let res = debx(myLilv, myMoney, myMonth * 12);
     let data = res.list_res;
     data.forEach(i => {
       categoryArr.push(i.qc)
