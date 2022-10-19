@@ -5,177 +5,353 @@
 <html lang="zh-CN" style="height: 100%">
 
 <head>
-  <meta charset="utf-8">
+	<meta charset="utf-8">
+	<title>房贷计算</title>
+	<link rel="stylesheet" href="css/reset.css">
+	<!-- 样式 -->
+	<style>
+		.title{
+			text-align: center;
+			font-size: 28px;
+			padding: 20px;
+			font-weight: bold;
+		}
+		.wapper {
+			width: 100%;
+			padding: 12px 12px;
+			box-sizing: border-box;
+			overflow: hidden;
+		}
+
+		.el-form--label-top .my-item .el-form-item__label {
+			padding: 0;
+			line-height: 1.6;
+			margin-bottom: 6px;
+			font-size: 14px;
+			font-weight: bold;
+		}
+
+		.el-form--label-top .my-item {
+			width: 200px;
+		}
+
+		.my-item .my-input {
+			width: 200px;
+
+		}
+	</style>
 </head>
 
-<body style="height: 100%; margin: 0">
-  <div style="text-align: center;padding: 6px 0px;font-size: 20px;">罗先生的列表</div>
-  <div id="container" style="height: 8000px"></div>
-
-
-  <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
-  <!-- Uncomment this line if you want to dataTool extension
-  <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@5.4.0/dist/extension/dataTool.min.js"></script>
-  -->
-  <!-- Uncomment this line if you want to use gl extension
-  <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
-  -->
-  <!-- Uncomment this line if you want to echarts-stat extension
-  <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts-stat@latest/dist/ecStat.min.js"></script>
-  -->
-  <!-- Uncomment this line if you want to use map
-  <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@4.9.0/map/js/china.js"></script>
-  <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js"></script>
-  -->
-  <!-- Uncomment these two lines if you want to use bmap extension
-  <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=YOUR_API_KEY"></script>
-  <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@5.4.0/dist/extension/bmap.min.js"></script>
-  -->
-
-  <script type="text/javascript">
-    var myMoney = prompt("请输入贷款金额(万元)", "");
-    var myMonth = prompt("请输入贷款期限(年)", "");
-    var myLilv = prompt("请输入贷款利率(%)", "");
-
-    //期次数组
-    let categoryArr = []
-    //偿还本金数组
-    let chbjArr = []
-    //偿还利息数组
-    let chlxArr = []
-
-    // console.log(categoryArr)
-    // 等额本息
-    function debx(year_lilv, money, month) {
-      money = (money * 10000);
-      var active = year_lilv * 10 / 12 * 0.001;
-      var t1 = Math.pow(1 + active, month);
-      var t2 = t1 - 1;
-      var tmp = t1 / t2;
-      var monthratio = active * tmp; //月利率
-      var monthBack = (money * monthratio).toFixed(2); //每月支付本息
-      year_lilv = year_lilv * 0.01; //百分比
-      var yue_lilv = ((year_lilv / 12));
-      var objArray = new Array(); //等额本息结果二维数组
-      var ljch_bj = 0; //累积偿还本金
-      var pre_sybj = 0; //上一个月剩余本金
-      var i = 1;
-      for (i = 1; i <= month; i++) { //等额本息
-        objArray[i - 1] = new Array(); //声明二维，每一个一维数组里面的一个元素都是一个数组；
-        objArray[i - 1]['qc'] = `第${i}期`; //期次
-        objArray[i - 1]['chbx'] = monthBack; //第i个月，偿还本息（元） 月供
-        if (i == 1) { //第一个月
-          pre_sybj = money;
-        } else {
-          pre_sybj = objArray[i - 2]['sybj'];
-        }
-        objArray[i - 1]['chlx'] = (pre_sybj * yue_lilv).toFixed(2); //第i个月，偿还利息（元）每月付息额 =（贷款本金-已还清贷款本金）×月利率
-        var chbj = (objArray[i - 1]['chbx'] - objArray[i - 1]['chlx']); //第i个月，偿还本金（元）
-        objArray[i - 1]['chbj'] = chbj.toFixed(2);
-        ljch_bj += chbj;
-        var sybj = (money - ljch_bj);
-        objArray[i - 1]['sybj'] = sybj.toFixed(2); //第i个月，剩余本金（元）
-        if (sybj <= 1) { //最后一个月出现小于1元的值
-          objArray[i - 1]['sybj'] = 0.00; //第i个月，剩余本金（元）
-        }
-      }
-      var yg = monthBack; //月供
-      var ljhkze = monthBack * month; //累计还款总额
-      var lxze = ljhkze - money; //利息总额
-      var yxxdy = monthBack * 2; //月薪需大于
-      var resArray = new Array();
-      resArray['simp_res'] = new Array(); //顶部基础信息数组
-      resArray['list_res'] = new Array(); //底部列表信息数组
-      resArray['simp_res']['yg'] = parseFloat(yg).toFixed(0);
-      resArray['simp_res']['ljhkze'] = parseFloat(ljhkze).toFixed(0);
-      resArray['simp_res']['lxze'] = parseFloat(lxze).toFixed(0);
-      resArray['simp_res']['yxxdy'] = parseFloat(yxxdy).toFixed(0);
-      resArray['list_res'] = objArray;
-
-      return resArray;
-    }
-    let res = debx(myLilv, myMoney, myMonth * 12);
-    let data = res.list_res;
-    data.forEach(i => {
-      categoryArr.push(i.qc)
-      chbjArr.push(i.chbj)
-      chlxArr.push(i.chlx)
-    });
-
-    categoryArr = categoryArr.reverse();
-    chbjArr = chbjArr.reverse();
-    chlxArr = chlxArr.reverse();
+<body>
+	<div id="APP">
+		<!-- <div id="content"></div> -->
+		<div class="title">{{title}}</div>
+		<!-- 表单 -->
+		<div class="wapper">
+			<el-form ref="form" :inline="true" :model="form" label-position="top" :rules="rules">
+				<el-form-item label="请输入贷款金额(万元)" prop="myMoney" ref="myMoney" class="my-item">
+					<el-input v-model="form.myMoney" type="number" class="my-input"></el-input>
+				</el-form-item>
+				<el-form-item label="请输入贷款期限(年)" prop="myMonth" ref="myMonth" class="my-item">
+					<el-input v-model="form.myMonth" type="number" class="my-input"></el-input>
+				</el-form-item>
+				<el-form-item label="请输入贷款利率(%)" prop="myLilv" ref="myLilv" class="my-item">
+					<el-input v-model="form.myLilv" type="number" class="my-input"></el-input>
+				</el-form-item>
+				<el-form-item label="还款类型" prop="myType" ref="myType" class="my-item">
+					<el-select v-model="form.myType" clearable>
+						<el-option label="等额本息" value="等额本息"></el-option>
+						<el-option label="等额本金" value="等额本金"></el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item>
+					<el-button type="primary" style="height: 68px;" @click="confirmForm('form')">查询</el-button>
+				</el-form-item>
+			</el-form>
+		</div>
+		<!--  -->
+		<div id="container" style="height: 8000px"></div>
+	</div>
 
 
 
+	<script type="text/javascript" src="js/echarts.min.js"></script>
+	<script src='js/jquery-2.0.3.min.js'></script>
+	<script src="js/vue.js"></script>
 
-    var dom = document.getElementById('container');
-    var myChart = echarts.init(dom, null, {
-      renderer: 'canvas',
-      useDirtyRect: false
-    });
-    var app = {};
+	<!-- element-ui -->
+	<link rel="stylesheet" href="element-ui/index.css">
+	<script src="element-ui/index.js"></script>
 
-    var option;
+	<!-- vant -->
+	<link rel="stylesheet" href="vant/index.css" />
+	<script src="vant/vant.min.js"></script>
 
-    option = {
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          // Use axis to trigger tooltip
-          type: 'shadow' // 'shadow' as default; can also be 'line' or 'shadow'
-        }
-      },
-      legend: {},
-      grid: {
-        left: '2%',
-        right: '2%',
-        bottom: '2%',
-        containLabel: true
-      },
-      xAxis: {
-        type: 'value'
-      },
-      yAxis: {
-        type: 'category',
-        data: categoryArr
-      },
-      series: [
-        {
-          name: '利息',
-          type: 'bar',
-          stack: 'total',
-          label: {
-            show: true
-          },
-          emphasis: {
-            focus: 'series'
-          },
-          data: chlxArr
-        },
-        {
-          name: '本金',
-          type: 'bar',
-          stack: 'total',
-          label: {
-            show: true
-          },
-          emphasis: {
-            focus: 'series'
-          },
-          data: chbjArr
-        },
+	<!-- 编写VUE -->
+	<script>
+		const vm = new Vue({
+			el: '#APP',  // element: 指定用vue来管理页面中的哪个标签区域
+			data() {
+				return {
+					title:"罗先生的列表",
+					form: {
+						myMoney: "",//我的贷款金额
+						myMonth: "",//我的贷款期限
+						myLilv: "",//我的贷款利率
+						myType: "",//还款类型
+						categoryArr: [], //期次数组
+						chbjArr: [],//偿还本金数组
+						chlxArr: [], //偿还利息数组
+						chbxArr: [],//偿还本息数组（月供）
+					},
+					rules: {
+						myMoney: [{ required: true, message: "请输入" }],
+						myMonth: [{ required: true, message: "请输入" }],
+						myLilv: [{ required: true, message: "请输入" }],
+						myType: [{ required: true, message: "请选择" }],
+					},
+					myChart: null,//实例
+					option: {
+						tooltip: {
+							trigger: 'axis',
+							axisPointer: {
+								// Use axis to trigger tooltip
+								type: 'shadow' // 'shadow' as default; can also be 'line' or 'shadow'
+							}
+						},
+						legend: {},
+						grid: {
+							left: '2%',
+							right: '2%',
+							bottom: '2%',
+							containLabel: true
+						},
+						xAxis: {
+							type: 'value'
+						},
+						yAxis: {
+							type: 'category',
+							data: [] //categoryArr
+						},
+						series: [
+							{
+								name: '本金',
+								type: 'bar',
+								stack: 'total',
+								label: {
+									show: true
+								},
+								emphasis: {
+									focus: 'series'
+								},
+								data: [] //chbjArr
+							},
+							{
+								name: '利息',
+								type: 'bar',
+								stack: 'total',
+								label: {
+									show: true
+								},
+								emphasis: {
+									focus: 'series'
+								},
+								data: [] //chlxArr
+							},
+							{
+								name: '月供',
+								type: 'bar',
+								label: {
+									show: true
+								},
+								emphasis: {
+									focus: 'series'
+								},
+								data: [] //chbxArr
+							},
+						]
+					},
+					//
+
+				}
+			},
+			computed: {
+
+			},
+			created() {
+
+			},
+			mounted() {
+				var dom = document.getElementById('container');
+				this.myChart = echarts.init(dom, null, {
+					renderer: 'canvas',
+					useDirtyRect: false
+				});
+				// console.log(this.myChart)
+			},
+			methods: {
+				resetData() {
+					this.categoryArr = [];
+					this.chbjArr = [];
+					this.chlxArr = [];
+					this.chbxArr = [];
+				},
+				//提交查询
+				confirmForm(formName) {
+					this.$refs[formName].validate((valid, object) => {
+						if (valid) {
+							this.resetData();
+							this.changeOption();
+							this.handleSet();
+						} else {
+							this.$message({
+								showClose: true,
+								message: '请完填写完整的信息',
+								type: 'error',
+								duration: 2000,
+							});
+							// this.$message.error('请完填写完整的信息');
+							// this.$toast.fail("请完填写完整的信息");
+							return false;
+						}
+					});
+				},
+				// 等额本息
+				debx(year_lilv, money, month) {
+					money = (money * 10000);
+					var active = year_lilv * 10 / 12 * 0.001;
+					var t1 = Math.pow(1 + active, month);
+					var t2 = t1 - 1;
+					var tmp = t1 / t2;
+					var monthratio = active * tmp; //月利率
+					var monthBack = (money * monthratio).toFixed(2); //每月支付本息
+					year_lilv = year_lilv * 0.01; //百分比
+					var yue_lilv = ((year_lilv / 12));
+					var objArray = new Array(); //等额本息结果二维数组
+					var ljch_bj = 0; //累积偿还本金
+					var pre_sybj = 0; //上一个月剩余本金
+					var i = 1;
+					for (i = 1; i <= month; i++) { //等额本息
+						objArray[i - 1] = new Array(); //声明二维，每一个一维数组里面的一个元素都是一个数组；
+						objArray[i - 1]['qc'] = `第${i}期`; //期次
+						objArray[i - 1]['chbx'] = monthBack; //第i个月，偿还本息（元） 月供
+						if (i == 1) { //第一个月
+							pre_sybj = money;
+						} else {
+							pre_sybj = objArray[i - 2]['sybj'];
+						}
+						objArray[i - 1]['chlx'] = (pre_sybj * yue_lilv).toFixed(2); //第i个月，偿还利息（元）每月付息额 =（贷款本金-已还清贷款本金）×月利率
+						var chbj = (objArray[i - 1]['chbx'] - objArray[i - 1]['chlx']); //第i个月，偿还本金（元）
+						objArray[i - 1]['chbj'] = chbj.toFixed(2);
+						ljch_bj += chbj;
+						var sybj = (money - ljch_bj);
+						objArray[i - 1]['sybj'] = sybj.toFixed(2); //第i个月，剩余本金（元）
+						if (sybj <= 1) { //最后一个月出现小于1元的值
+							objArray[i - 1]['sybj'] = 0.00; //第i个月，剩余本金（元）
+						}
+					}
+					var yg = monthBack; //月供
+					var ljhkze = monthBack * month; //累计还款总额
+					var lxze = ljhkze - money; //利息总额
+					var yxxdy = monthBack * 2; //月薪需大于
+					var resArray = new Array();
+					resArray['simp_res'] = new Array(); //顶部基础信息数组
+					resArray['list_res'] = new Array(); //底部列表信息数组
+					resArray['simp_res']['yg'] = parseFloat(yg).toFixed(0);
+					resArray['simp_res']['ljhkze'] = parseFloat(ljhkze).toFixed(0);
+					resArray['simp_res']['lxze'] = parseFloat(lxze).toFixed(0);
+					resArray['simp_res']['yxxdy'] = parseFloat(yxxdy).toFixed(0);
+					resArray['list_res'] = objArray;
+
+					return resArray;
+				},
+				// 等额本金
+				debj(year_lilv, money, month) {
+					money = money * 10000;
+					var active = year_lilv * 10 / 12 * 0.001;
+					var objArray = new Array();
+					var interestM = 0; //月还款额
+					var interestTotal = 0; //累计还款总额
+					var chbj = money / month; //每月偿还本金（元） month 3年36
+					for (var i = 1; i <= month; i++) {
+						var t1 = (money - money * (i - 1) / month) * active; //第i月还款利息
+						interestM = money / month + t1; //第i月还款额
+						objArray[i - 1] = new Array(); //声明二维，每一个一维数组里面的一个元素都是一个数组；
+						objArray[i - 1]['qc'] = `第${i}期`; //期次
+						objArray[i - 1]['chbx'] = (interestM).toFixed(2); //第i个月，偿还本息（元） 月供
+						objArray[i - 1]['chlx'] = (interestM - chbj).toFixed(2); //第i个月，偿还利息（元）
+						objArray[i - 1]['chbj'] = (chbj).toFixed(2); //第i个月，偿还本金（元）
+						objArray[i - 1]['sybj'] = (money - (chbj * i)).toFixed(2); //第i个月，剩余本金（元）
+						if (objArray[i - 1]['sybj'] <= 1) { //最后一个月出现小于1元的值
+							objArray[i - 1]['sybj'] = 0.00; //第i个月，剩余本金（元）
+						}
+						interestTotal = interestTotal + interestM;
+					}
+					interestTotal = (Math.round(interestTotal * 100)) / 100; //累计还款总额
+					var yg = objArray[0]['chbx']; //月供 最高月供
+					var ljhkze = interestTotal; //累计还款总额
+					var lxze = (ljhkze - money); //利息总额
+					lxze = lxze.toFixed(0);
+					var yxxdy = (parseFloat(objArray[0]['chbx']) + parseFloat(objArray[month - 1]['chbx'])); //月薪需大于
+					yxxdy = yxxdy.toFixed(0);
+					var resArray = new Array();
+					resArray['simp_res'] = new Array(); //顶部基础信息数组
+					resArray['list_res'] = new Array(); //底部列表信息数组
+					resArray['simp_res']['yg'] = parseFloat(yg).toFixed(0);
+					resArray['simp_res']['ljhkze'] = parseFloat(ljhkze).toFixed(0);
+					resArray['simp_res']['lxze'] = parseFloat(lxze).toFixed(0);
+					resArray['simp_res']['yxxdy'] = parseFloat(yxxdy).toFixed(0);
+					resArray['list_res'] = objArray;
+
+					return resArray;
+				},
+				//更改配置数据
+				changeOption() {
+					let res = {};
+					if (this.form.myType == "等额本息") {
+						// console.log("等额本息")
+						res = this.debx(this.form.myLilv, this.form.myMoney, this.form.myMonth * 12);
+					} else if (this.form.myType == "等额本金") {
+						// console.log("等额本金")
+						res = this.debj(this.form.myLilv, this.form.myMoney, this.form.myMonth * 12);
+					}
+					if (!!res.list_res) {
+						let data = res.list_res;
+						// console.log(data)
+						data.forEach(i => {
+							this.categoryArr.push(i.qc)
+							this.chbjArr.push(i.chbj)
+							this.chlxArr.push(i.chlx)
+							this.chbxArr.push(i.chbx)
+						});
+						//
+						this.categoryArr = this.categoryArr.reverse();
+						this.chbjArr = this.chbjArr.reverse();
+						this.chlxArr = this.chlxArr.reverse();
+						this.chbxArr = this.chbxArr.reverse();
+						//
+						this.option.yAxis.data = [...this.categoryArr];
+						this.option.series[0].data = [...this.chbjArr];
+						this.option.series[1].data = [...this.chlxArr];
+						this.option.series[2].data = [...this.chbxArr];
 
 
-      ]
-    };
+					}
+					// console.log(this.categoryArr)
+					// console.log(this.chbjArr)
+					// console.log(this.chlxArr)
+				},
+				//设置
+				handleSet() {
+					if (this.option && typeof this.option === 'object') {
+						this.myChart.setOption(this.option);
+					}
+				},
+				//
 
-    if (option && typeof option === 'object') {
-      myChart.setOption(option);
-    }
-
-    window.addEventListener('resize', myChart.resize);
-  </script>
+			}
+		})
+	</script>
 </body>
 
 </html>
